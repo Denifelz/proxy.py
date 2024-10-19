@@ -89,7 +89,7 @@ class HttpProtocolHandler(BaseTcpServerHandler[HttpClientConnection]):
             if self.plugin:
                 self.plugin.on_client_connection_close()
             logger.debug(
-                "Closing client connection %s has buffer %s"
+                'Closing client connection %s has buffer %s'
                 % (self.work.address, self.work.has_buffer()),
             )
             conn = self.work.connection
