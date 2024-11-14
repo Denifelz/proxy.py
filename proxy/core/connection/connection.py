@@ -20,7 +20,7 @@ from ...common.constants import DEFAULT_BUFFER_SIZE, DEFAULT_MAX_SEND_SIZE
 
 logger = logging.getLogger(__name__)
 
-EMPTY_MV = memoryview(b"")
+EMPTY_MV = memoryview(b'')
 
 class TcpConnectionUninitializedException(Exception):
     pass
@@ -79,7 +79,7 @@ class TcpConnection(ABC):
             self._recv_leakage.putback(buffer_size - size)
         if size == 0:
             return None
-        logger.debug("received %d bytes from %s" % (size, self.tag))
+        logger.debug('received %d bytes from %s' % (size, self.tag))
         logger.info(data)
         return memoryview(data)
 
@@ -121,7 +121,7 @@ class TcpConnection(ABC):
                     self._flush_leakage.putback(allowed_bytes - sent)
             except BlockingIOError:
                 logger.warning(
-                    "BlockingIOError when trying send to {0}".format(self.tag)
+                    'BlockingIOError when trying send to {0}'.format(self.tag),
                 )
                 del mv
                 return 0
@@ -133,7 +133,7 @@ class TcpConnection(ABC):
         else:
             self.buffer[0] = mv[sent:]
         # if sent > 0:
-        logger.debug("flushed %d bytes to %s" % (sent, self.tag))
+        logger.debug('flushed %d bytes to %s' % (sent, self.tag))
         logger.info(mv[:sent].tobytes())
         del mv
         return sent
