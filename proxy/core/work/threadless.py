@@ -41,7 +41,12 @@ logger = logging.getLogger(__name__)
 proxy_flags.add_argument(
     "--inactive-conn-cleanup-timeout",
     default=DEFAULT_INACTIVE_CONN_CLEANUP_TIMEOUT,
-    help="Time after which inactive works must be cleaned up. Default {0} seconds".format(
+    help="Time after which inactive works must be cleaned up. "
+    + "Increase this value if your backend services are slow to response "
+    + "or when proxy.py is handling a high volume. When running proxy.py on Google Cloud (GCP) "
+    + "you may see 'backend_connection_closed_before_data_sent_to_client', with curl clients "
+    + "you may see 'Empty reply from server' error when '--inactive-conn-cleanup-timeout' "
+    + "value is low for your use-case. Default {0} seconds".format(
         DEFAULT_INACTIVE_CONN_CLEANUP_TIMEOUT
     ),
 )

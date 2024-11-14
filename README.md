@@ -2685,6 +2685,13 @@ options:
                         events.
   --inactive-conn-cleanup-timeout INACTIVE_CONN_CLEANUP_TIMEOUT
                         Time after which inactive works must be cleaned up.
+                        Increase this value if your backend services are slow
+                        to response or when proxy.py is handling a high
+                        volume. When running proxy.py on Google Cloud (GCP)
+                        you may see 'backend_connection_closed_before_data_sen
+                        t_to_client', with curl clients you may see 'Empty
+                        reply from server' error when '--inactive-conn-
+                        cleanup-timeout' value is low for your use-case.
                         Default 1 seconds
   --enable-proxy-protocol
                         Default: False. If used, will enable proxy protocol.
