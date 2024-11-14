@@ -2619,6 +2619,7 @@ usage: -m [-h] [--tunnel-hostname TUNNEL_HOSTNAME] [--tunnel-port TUNNEL_PORT]
           [--tunnel-ssh-key-passphrase TUNNEL_SSH_KEY_PASSPHRASE]
           [--tunnel-remote-port TUNNEL_REMOTE_PORT] [--threadless]
           [--threaded] [--num-workers NUM_WORKERS] [--enable-events]
+          [--inactive-conn-cleanup-timeout INACTIVE_CONN_CLEANUP_TIMEOUT]
           [--enable-proxy-protocol] [--enable-conn-pool] [--key-file KEY_FILE]
           [--cert-file CERT_FILE] [--client-recvbuf-size CLIENT_RECVBUF_SIZE]
           [--server-recvbuf-size SERVER_RECVBUF_SIZE]
@@ -2682,6 +2683,9 @@ options:
   --enable-events       Default: False. Enables core to dispatch lifecycle
                         events. Plugins can be used to subscribe for core
                         events.
+  --inactive-conn-cleanup-timeout INACTIVE_CONN_CLEANUP_TIMEOUT
+                        Time after which inactive works must be cleaned up.
+                        Default 1 seconds
   --enable-proxy-protocol
                         Default: False. If used, will enable proxy protocol.
                         Only version 1 is currently supported.
