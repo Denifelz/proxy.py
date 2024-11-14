@@ -190,7 +190,7 @@ class HttpProtocolHandler(BaseTcpServerHandler[HttpClientConnection]):
 
     async def handle_writables(self, writables: Writables) -> bool:
         if self.work.connection.fileno() in writables and self.work.has_buffer():
-            logger.debug('Client is write ready, flushing...')
+            # logger.debug('Client is write ready, flushing...')
             self.last_activity = time.time()
             # TODO(abhinavsingh): This hook could just reside within server recv block
             # instead of invoking when flushed to client.
@@ -219,7 +219,7 @@ class HttpProtocolHandler(BaseTcpServerHandler[HttpClientConnection]):
 
     async def handle_readables(self, readables: Readables) -> bool:
         if self.work.connection.fileno() in readables:
-            logger.debug('Client is read ready, receiving...')
+            # logger.debug('Client is read ready, receiving...')
             self.last_activity = time.time()
             try:
                 teardown = await super().handle_readables(readables)

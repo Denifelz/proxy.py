@@ -908,3 +908,17 @@ class TestHttpParser(unittest.TestCase):
                     b'\r\n',
                 ),
             )
+
+    def test_byte_by_byte(self) -> None:
+        response = HttpParser(httpParserTypes.RESPONSE_PARSER)
+        request = [
+            # pylint: disable=line-too-long
+            b'HTTP/1.1 200 OK\r\naccess-control-allow-credentials: true\r\naccess-control-allow-origin: *\r\ncontent-type: application/json; charset=utf-8\r\ndate: Thu, 14 Nov 2024 10:24:11 GMT\r\ncontent-length: 550\r\nserver: Fly/a40a59d0 (2024-11-12)\r\nvia: 1.1 fly.io\r\nfly-request-id: 01JCN37CEK4TB4DRWZDFFQYSD9-bom\r\n\r\n{\n  "args": {},\n  "headers": {\n    "Accept": [\n      "*/*"\n    ],\n    "Host": [\n      "httpbingo.org"\n    ],\n    "User-Agent": [\n      "curl/8.6.0"\n    ],\n    "Via": [\n      "1.1 fly.io"\n    ],\n    "X-Forwarded-For": [\n      "183.82.162.68, 66.241.125.232"\n    ],\n    "X-Forwarded-Port": [\n      "443"\n    ],\n    "X-Forwarded-Proto": [\n      "https"\n    ],\n    "X-Forwarded-Ssl',
+            b'": [\n      "on"\n    ],\n    "X-Request-Start": [\n      "t=1731579851219982"\n    ]\n  },\n  "method": "GET",\n  "origin": "183.82.162.68",\n  "url": "https://httpbingo.org/get"\n}\n',
+        ]
+        response.parse(memoryview(request[0]))
+        self.assertEqual(response.state, httpParserStates.RCVING_BODY)
+        self.assertEqual(response.code, b"200")
+        for byte in (bytes([b]) for b in request[1]):
+            response.parse(memoryview(byte))
+        self.assertEqual(response.state, httpParserStates.COMPLETE)

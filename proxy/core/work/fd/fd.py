@@ -41,6 +41,7 @@ class ThreadlessFdExecutor(Threadless[T]):
             publisher_id=self.__class__.__qualname__,
         )
         try:
+            logger.debug("Initializing work#{0}".format(fileno))
             self.works[fileno].initialize()
             self._total += 1
         except Exception as e:
@@ -48,7 +49,7 @@ class ThreadlessFdExecutor(Threadless[T]):
                 'Exception occurred during initialization',
                 exc_info=e,
             )
-            self._cleanup(fileno)
+            self._cleanup(fileno, "error")
 
     @property
     @abstractmethod
