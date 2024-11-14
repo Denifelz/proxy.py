@@ -20,6 +20,7 @@ from typing import (
     cast,
 )
 
+from ...common.flag import flags as proxy_flags
 from ...common.types import Readables, Writables, SelectableEvents
 from ...common.logger import Logger
 from ...common.constants import (
@@ -35,6 +36,14 @@ if TYPE_CHECKING:   # pragma: no cover
 T = TypeVar('T')
 
 logger = logging.getLogger(__name__)
+
+
+proxy_flags.add_argument(
+    "--inactive-conn-cleanup-timeout",
+    "-v",
+    default=DEFAULT_INACTIVE_CONN_CLEANUP_TIMEOUT,
+    help="Time after which inactive works must be cleaned up",
+)
 
 
 class Threadless(ABC, Generic[T]):
@@ -87,7 +96,7 @@ class Threadless(ABC, Generic[T]):
             SelectableEvents,
         ] = {}
         self.wait_timeout: float = DEFAULT_WAIT_FOR_TASKS_TIMEOUT
-        self.cleanup_inactive_timeout: float = DEFAULT_INACTIVE_CONN_CLEANUP_TIMEOUT
+        self.cleanup_inactive_timeout: float = self.flags.inactive_conn_cleanup_timeout
         self._total: int = 0
         # When put at the top, causes circular import error
         # since integrated ssh tunnel was introduced.
