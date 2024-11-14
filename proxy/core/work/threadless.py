@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 proxy_flags.add_argument(
-    "--inactive-conn-cleanup-timeout",
+    '--inactive-conn-cleanup-timeout',
     default=DEFAULT_INACTIVE_CONN_CLEANUP_TIMEOUT,
     help="Time after which inactive works must be cleaned up. "
     + "Increase this value if your backend services are slow to response "
