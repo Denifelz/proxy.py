@@ -39,20 +39,16 @@ class TcpConnection(ABC):
     def __init__(
         self,
         tag: int,
-        flush_bw_in_bps: int = 512,
-        recv_bw_in_bps: int = 512,
+        flush_bps: int = 512,
+        recv_bps: int = 512,
     ) -> None:
         self.tag: str = 'server' if tag == tcpConnectionTypes.SERVER else 'client'
         self.buffer: List[memoryview] = []
         self.closed: bool = False
         self._reusable: bool = False
         self._num_buffer = 0
-        self._flush_leakage = (
-            Leakage(rate=flush_bw_in_bps) if flush_bw_in_bps > 0 else None
-        )
-        self._recv_leakage = (
-            Leakage(rate=recv_bw_in_bps) if recv_bw_in_bps > 0 else None
-        )
+        self._flush_leakage = Leakage(rate=flush_bps) if flush_bps > 0 else None
+        self._recv_leakage = Leakage(rate=recv_bps) if recv_bps > 0 else None
 
     @property
     @abstractmethod
@@ -75,8 +71,9 @@ class TcpConnection(ABC):
             buffer_size = min(buffer_size, allowed_bytes)
         data: bytes = self.connection.recv(buffer_size)
         size = len(data)
-        if self._recv_leakage is not None:
-            self._recv_leakage.release(buffer_size - size)
+        unused = buffer_size - size
+        if self._recv_leakage is not None and unused > 0:
+            self._recv_leakage.release(unused)
         if size == 0:
             return None
         logger.debug('received %d bytes from %s' % (size, self.tag))
@@ -103,8 +100,6 @@ class TcpConnection(ABC):
         if not self.has_buffer():
             return 0
         mv = self.buffer[0]
-        print(self.buffer)
-        print(mv.tobytes())
         # TODO: Assemble multiple packets if total
         # size remains below max send size.
         max_send_size = max_send_size or DEFAULT_MAX_SEND_SIZE
@@ -117,22 +112,21 @@ class TcpConnection(ABC):
         if allowed_bytes > 0:
             try:
                 sent = self.send(mv[:allowed_bytes])
-                if self._flush_leakage is not None:
-                    self._flush_leakage.release(allowed_bytes - sent)
             except BlockingIOError:
                 logger.warning(
                     'BlockingIOError when trying send to {0}'.format(self.tag),
                 )
                 del mv
                 return 0
-        # if sent == 0:
-        #     return 0
+            finally:
+                unused = allowed_bytes - sent
+                if self._flush_leakage is not None and unused > 0:
+                    self._flush_leakage.release(unused)
         if sent == len(mv):
             self.buffer.pop(0)
             self._num_buffer -= 1
         else:
             self.buffer[0] = mv[sent:]
-        # if sent > 0:
         logger.debug('flushed %d bytes to %s' % (sent, self.tag))
         logger.info(mv[:sent].tobytes())
         del mv

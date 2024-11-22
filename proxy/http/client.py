@@ -33,7 +33,7 @@ def client(
     scheme: bytes = HTTPS_PROTO,
     timeout: float = DEFAULT_TIMEOUT,
     content_type: bytes = b'application/x-www-form-urlencoded',
-    verify: bool = False,
+    verify: bool = True,
 ) -> Optional[HttpParser]:
     """HTTP Client"""
     request = build_http_request(
