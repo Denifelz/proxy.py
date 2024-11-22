@@ -37,7 +37,7 @@ class Leakage:
         E.g. say you wanted to read 1024 units, but only 24 units were read, then put
         back unconsumed 1000 tokens back in the bucket."""
         if tokens < 0:
-            raise ValueError("Cannot release a negative number of tokens")
+            raise ValueError('Cannot release a negative number of tokens')
         self.tokens += tokens
         self.tokens = min(self.tokens, self.rate)
 
