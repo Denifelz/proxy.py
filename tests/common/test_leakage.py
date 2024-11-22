@@ -22,8 +22,7 @@ class TestLeakage(unittest.TestCase):
         rate = 100  # bytes per second
         bucket = Leakage(rate)
         self.assertEqual(
-            bucket.consume(150),
-            100,
+            bucket.consume(150), 100,
         )  # No tokens yet, so expect 0 bytes to be sent
 
     def test_consume_with_refill(self) -> None:

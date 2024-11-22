@@ -104,7 +104,7 @@ class BaseTcpServerHandler(Work[T]):
     is ready to accept new data before flushing data to it.
 
     Most importantly, BaseTcpServerHandler ensures that pending buffers
-    to the client are flushed before connection is closed.
+    to the client are flushed before connection is closed with the client.
 
     Implementations must provide::
 
@@ -170,9 +170,9 @@ class BaseTcpServerHandler(Work[T]):
     async def handle_writables(self, writables: Writables) -> bool:
         teardown = False
         if self.work.connection.fileno() in writables and self.work.has_buffer():
-            logger.debug(
-                'Flushing buffer to client {0}'.format(self.work.address),
-            )
+            # logger.debug(
+            #     'Flushing buffer to client {0}'.format(self.work.address),
+            # )
             self.work.flush(self.flags.max_sendbuf_size)
             if self.must_flush_before_shutdown is True and \
                     not self.work.has_buffer():

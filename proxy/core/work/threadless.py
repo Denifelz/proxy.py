@@ -318,16 +318,18 @@ class Threadless(ABC, Generic[T]):
             if self.works[work_id].is_inactive():
                 inactive_works.append(work_id)
         for work_id in inactive_works:
-            self._cleanup(work_id)
+            self._cleanup(work_id, 'inactive')
 
     # TODO: HttpProtocolHandler.shutdown can call flush which may block
-    def _cleanup(self, work_id: int) -> None:
+    def _cleanup(self, work_id: int, reason: str) -> None:
         if work_id in self.registered_events_by_work_ids:
             assert self.selector
             for fileno in self.registered_events_by_work_ids[work_id]:
                 logger.debug(
-                    'fd#{0} unregistered by work#{1}'.format(
-                        fileno, work_id,
+                    'fd#{0} unregistered by work#{1}, reason: {2}'.format(
+                        fileno,
+                        work_id,
+                        reason,
                     ),
                 )
                 self.selector.unregister(fileno)
@@ -384,7 +386,7 @@ class Threadless(ABC, Generic[T]):
             return False
         # Invoke Threadless.handle_events
         self.unfinished.update(self._create_tasks(work_by_ids))
-        # logger.debug('Executing {0} works'.format(len(self.unfinished)))
+        # logger.debug("Executing {0} works".format(len(self.unfinished)))
         # Cleanup finished tasks
         for task in await self._wait_for_tasks():
             # Checking for result can raise exception e.g.
@@ -398,11 +400,12 @@ class Threadless(ABC, Generic[T]):
                 teardown = True
             finally:
                 if teardown:
-                    self._cleanup(work_id)
+                    self._cleanup(work_id, 'teardown')
                     # self.cleanup(int(task.get_name()))
         # logger.debug(
-        #     'Done executing works, {0} pending, {1} registered'.format(
-        #         len(self.unfinished), len(self.registered_events_by_work_ids),
+        #     "Done executing works, {0} pending, {1} registered".format(
+        #         len(self.unfinished),
+        #         len(self.registered_events_by_work_ids),
         #     ),
         # )
         return False

@@ -14,11 +14,13 @@ from typing import List, Union, Optional
 
 from .types import tcpConnectionTypes
 from ...common.types import TcpOrTlsSocket
+from ...common.leakage import Leakage
 from ...common.constants import DEFAULT_BUFFER_SIZE, DEFAULT_MAX_SEND_SIZE
 
 
 logger = logging.getLogger(__name__)
 
+EMPTY_MV = memoryview(b'')
 
 class TcpConnectionUninitializedException(Exception):
     pass
@@ -34,12 +36,19 @@ class TcpConnection(ABC):
     a socket connection object.
     """
 
-    def __init__(self, tag: int) -> None:
+    def __init__(
+        self,
+        tag: int,
+        flush_bps: int = 512,
+        recv_bps: int = 512,
+    ) -> None:
         self.tag: str = 'server' if tag == tcpConnectionTypes.SERVER else 'client'
         self.buffer: List[memoryview] = []
         self.closed: bool = False
         self._reusable: bool = False
         self._num_buffer = 0
+        self._flush_leakage = Leakage(rate=flush_bps) if flush_bps > 0 else None
+        self._recv_leakage = Leakage(rate=recv_bps) if recv_bps > 0 else None
 
     @property
     @abstractmethod
@@ -55,14 +64,20 @@ class TcpConnection(ABC):
             self, buffer_size: int = DEFAULT_BUFFER_SIZE,
     ) -> Optional[memoryview]:
         """Users must handle socket.error exceptions"""
+        if self._recv_leakage is not None:
+            allowed_bytes = self._recv_leakage.consume(buffer_size)
+            if allowed_bytes == 0:
+                return EMPTY_MV
+            buffer_size = min(buffer_size, allowed_bytes)
         data: bytes = self.connection.recv(buffer_size)
-        if len(data) == 0:
+        size = len(data)
+        unused = buffer_size - size
+        if self._recv_leakage is not None and unused > 0:
+            self._recv_leakage.release(unused)
+        if size == 0:
             return None
-        logger.debug(
-            'received %d bytes from %s' %
-            (len(data), self.tag),
-        )
-        # logger.info(data)
+        logger.debug('received %d bytes from %s' % (size, self.tag))
+        logger.info(data)
         return memoryview(data)
 
     def close(self) -> bool:
@@ -75,6 +90,8 @@ class TcpConnection(ABC):
         return self._num_buffer != 0
 
     def queue(self, mv: memoryview) -> None:
+        if len(mv) == 0:
+            return
         self.buffer.append(mv)
         self._num_buffer += 1
 
@@ -86,18 +103,32 @@ class TcpConnection(ABC):
         # TODO: Assemble multiple packets if total
         # size remains below max send size.
         max_send_size = max_send_size or DEFAULT_MAX_SEND_SIZE
-        try:
-            sent: int = self.send(mv[:max_send_size])
-        except BlockingIOError:
-            logger.warning('BlockingIOError when trying send to {0}'.format(self.tag))
-            return 0
+        allowed_bytes = (
+            self._flush_leakage.consume(min(len(mv), max_send_size))
+            if self._flush_leakage is not None
+            else max_send_size
+        )
+        sent: int = 0
+        if allowed_bytes > 0:
+            try:
+                sent = self.send(mv[:allowed_bytes])
+            except BlockingIOError:
+                logger.warning(
+                    'BlockingIOError when trying send to {0}'.format(self.tag),
+                )
+                del mv
+                return 0
+            finally:
+                unused = allowed_bytes - sent
+                if self._flush_leakage is not None and unused > 0:
+                    self._flush_leakage.release(unused)
         if sent == len(mv):
             self.buffer.pop(0)
             self._num_buffer -= 1
         else:
             self.buffer[0] = mv[sent:]
         logger.debug('flushed %d bytes to %s' % (sent, self.tag))
-        # logger.info(mv[:sent].tobytes())
+        logger.info(mv[:sent].tobytes())
         del mv
         return sent
 
