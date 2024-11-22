@@ -86,7 +86,7 @@ class ReverseProxy(TcpUpstreamConnectionHandler, HttpWebServerBasePlugin):
                         )
                         needs_upstream = True
                         logger.debug(
-                            "Starting connection to upstream {0}".format(self.choice)
+                            'Starting connection to upstream {0}'.format(self.choice),
                         )
                         break
                 # Dynamic routes
@@ -99,21 +99,21 @@ class ReverseProxy(TcpUpstreamConnectionHandler, HttpWebServerBasePlugin):
                             needs_upstream = True
                             self._upstream_proxy_pass = str(self.choice)
                             logger.debug(
-                                "Starting connection to upstream {0}".format(choice)
+                                'Starting connection to upstream {0}'.format(choice),
                             )
                         elif isinstance(choice, memoryview):
                             self.client.queue(choice)
                             self._upstream_proxy_pass = '{0} bytes'.format(len(choice))
-                            logger.debug("Sending raw response to client")
+                            logger.debug('Sending raw response to client')
                         else:
                             self.upstream = choice
                             self._upstream_proxy_pass = '{0}:{1}'.format(
                                 *self.upstream.addr,
                             )
                             logger.debug(
-                                "Using existing connection to upstream {0}".format(
-                                    self.upstream.addr
-                                )
+                                'Using existing connection to upstream {0}'.format(
+                                    self.upstream.addr,
+                                ),
                             )
                         break
                 else:

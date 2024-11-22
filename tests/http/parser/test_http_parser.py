@@ -918,7 +918,7 @@ class TestHttpParser(unittest.TestCase):
         ]
         response.parse(memoryview(request[0]))
         self.assertEqual(response.state, httpParserStates.RCVING_BODY)
-        self.assertEqual(response.code, b"200")
+        self.assertEqual(response.code, b'200')
         for byte in (bytes([b]) for b in request[1]):
             response.parse(memoryview(byte))
         self.assertEqual(response.state, httpParserStates.COMPLETE)
