@@ -14,14 +14,14 @@ import time
 class Leakage:
     """Leaky Bucket algorithm."""
 
-    def __init__(self, rate: int):
+    def __init__(self, rate: int) -> None:
         """Initialize the leaky bucket with a specified leak rate in bytes per second."""
         # Maximum number of tokens the bucket can hold (bytes per second)
         self.rate = rate
         self.tokens = rate
         self.last_check = time.time()
 
-    def _refill(self):
+    def _refill(self) -> None:
         """Refill tokens based on the elapsed time since the last check."""
         now = time.time()
         elapsed = now - self.last_check
@@ -37,7 +37,7 @@ class Leakage:
         E.g. say you wanted to read 1024 units, but only 24 units were read, then put
         back unconsumed 1000 tokens back in the bucket."""
         if tokens < 0:
-            raise ValueError("Cannot release a negative number of tokens")
+            raise ValueError('Cannot release a negative number of tokens')
         self.tokens += tokens
         self.tokens = min(self.tokens, self.rate)
 
